@@ -1,34 +1,27 @@
 pipeline {
-    agent any
-    
-    tools {
-        maven 'local_maven'
-    }
-    parameters {
-         string(name: 'staging_server', defaultValue: '13.232.37.20', description: 'Remote Staging Server')
+  agent any
+
+  stages {
+    stage('Checkout') {
+      steps {
+        // Checkout the source code from the repository
+        git branch: 'main', credentialsId: '123', url: 'https://github.com/ganesh20101/devOpsWeb.git'
+      }
     }
 
-stages{
-        stage('Build'){
-            steps {
-                sh 'mvn clean package'
-            }
-            post {
-                success {
-                    echo 'Archiving the artifacts'
-                    archiveArtifacts artifacts: '**/target/*.war'
-                }
-            }
-        }
-
-        stage ('Deployments'){
-            parallel{
-                stage ("Deploy to Staging"){
-                    steps {
-                        sh "scp -v -o StrictHostKeyChecking=no **/*.war root@${params.staging_server}:/opt/tomcat/webapps/"
-                    }
-                }
-            }
-        }
+    stage('Build') {
+      steps {
+        // Build your application
+        // (e.g., compile, run tests, package as a WAR file)
+        sh 'mvn clean package'
+      }
     }
+
+    stage('Deploy to Tomcat') {
+      steps {
+        // Copy the WAR file to the Tomcat webapps directory
+        deploy adapters: [tomcat9(credentialsId: '90b81f7f-735b-4330-8aee-f24f94bd4200', path: '', url: 'http://13.211.71.182:8080/')], contextPath: null, war: '**/* .war'
+      }
+    }
+  }
 }
